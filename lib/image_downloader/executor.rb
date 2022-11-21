@@ -13,52 +13,21 @@ module ImageDownloader
 
       ImageDownloader.logger.info "Found #{urls.count} urls in the provided file"
 
-      create_images_folder!
-      download_images!
+      create_folder!
+      fetch_images!
 
       ImageDownloader.logger.info 'Done!'
-
-      nil
     end
 
     private
 
-    def create_images_folder!
+    def create_folder!
       ImageDownloader.logger.info "Creating a new folder: '#{dirname}'"
       FileUtils.mkdir_p(dirname)
     end
 
-    def download_images!
-      threads_num = [urls.count, Concurrent.processor_count].min
-      ImageDownloader.logger.info "Process downloadings in #{threads_num} threads:"
-      pool = Concurrent::FixedThreadPool.new(threads_num)
-
-      downloaded_count = urls.map.with_index(1) do |url, i|
-        Concurrent::Promise.execute(executor: pool) do
-          ImageDownloader.logger.info "[#{i}] Start downloading from: '#{ImageDownloader.truncate_url(url)}'"
-
-          response = HTTParty.get(url, timeout: 10)
-          raise "Bad status: #{response.code}" unless response.ok?
-
-          type, ext = response.content_type.split('/')
-          raise "Bad content type: '#{type}'" if type != 'image'
-
-          name = File.join(dirname, "#{i}.#{ext}")
-          File.binwrite(name, response.body)
-
-          ImageDownloader.logger.info "[#{i}] Image saved as '#{name}'"
-          true
-        rescue StandardError => e
-          ImageDownloader.logger.error "[#{i}] " + e.message
-          false
-        end
-      end.map(&:value!).count(&:itself)
-
-      ImageDownloader.logger.info(
-        "#{downloaded_count} images downloaded, #{urls.count - downloaded_count} errors"
-      )
-    ensure
-      pool&.tap(&:shutdown)&.wait_for_termination
+    def fetch_images!
+      Fetcher.new(dirname, urls).call
     end
 
     def dirname

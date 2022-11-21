@@ -5,6 +5,7 @@ require 'concurrent-ruby'
 require 'httparty'
 
 require 'image_downloader/executor'
+require 'image_downloader/fetcher'
 require 'image_downloader/file_validator'
 require 'image_downloader/version'
 
