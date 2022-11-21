@@ -19,6 +19,11 @@ module ImageDownloader
     private
 
     def validate_file_path
+      if file_path.nil?
+        ImageDownloader.logger.error 'You should provide a file path as the first argument'
+        return false
+      end
+
       unless File.file?(file_path)
         ImageDownloader.logger.error "Provided file not found: '#{file_path}'"
         return false
