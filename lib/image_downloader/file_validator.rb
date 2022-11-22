@@ -19,46 +19,34 @@ module ImageDownloader
     private
 
     def validate_file_path
-      if file_path.nil?
-        ImageDownloader.logger.error 'You should provide a file path as the first argument'
-        return false
-      end
+      return true if file_path_error_message.nil?
 
-      unless File.file?(file_path)
-        ImageDownloader.logger.error "Provided file not found: '#{file_path}'"
-        return false
-      end
-
-      if File.empty?(file_path)
-        ImageDownloader.logger.error "Provided file is empty: '#{file_path}'"
-        return false
-      end
-
-      if File.size(file_path) > MAX_FILE_SIZE
-        ImageDownloader.logger.error "Provided file is too big: '#{file_path}'"
-        return false
-      end
-
-      true
+      ImageDownloader.logger.error file_path_error_message
+      false
     end
 
     def validate_urls
       urls.map.with_index(1) do |url, i|
-        valid = begin
-          uri = URI.parse(url)
-          uri.is_a?(URI::HTTP) && !uri.host.nil?
-        rescue URI::InvalidURIError
-          false
-        end
+        next true if ImageDownloader.valid_url?(url)
 
-        unless valid
-          ImageDownloader.logger.error(
-            "Provided file contains bad url (line: #{i}): '#{ImageDownloader.truncate_url(url)}'"
-          )
-        end
+        msg = "Provided file contains bad url (line: #{i}): '#{ImageDownloader.truncate_url(url)}'"
+        ImageDownloader.logger.error msg
 
-        valid
+        false
       end.all?
+    end
+
+    def file_path_error_message
+      @file_path_error_message ||=
+        if file_path.nil?
+          'You should provide a file path as the first argument'
+        elsif !File.file?(file_path)
+          "Provided file not found: '#{file_path}'"
+        elsif File.empty?(file_path)
+          "Provided file is empty: '#{file_path}'"
+        elsif File.size(file_path) > MAX_FILE_SIZE
+          "Provided file is too big: '#{file_path}'"
+        end
     end
 
     def urls

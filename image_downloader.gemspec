@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
   spec.description   = 'Downloads images using a text file'
   spec.license       = 'MIT'
 
-  spec.required_ruby_version = Gem::Requirement.new('>= ' + File.read('.ruby-version').strip)
+  spec.required_ruby_version = Gem::Requirement.new(">= #{File.read('.ruby-version').strip}")
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
@@ -21,4 +21,14 @@ Gem::Specification.new do |spec|
 
   spec.executables << 'image_downloader'
   spec.metadata['rubygems_mfa_required'] = 'true'
+
+  spec.add_runtime_dependency 'concurrent-ruby', '~> 1.1'
+  spec.add_runtime_dependency 'httparty', '~> 0.20.0'
+
+  spec.add_development_dependency 'pry', '~> 0.13.1'
+  spec.add_development_dependency 'rake', '~> 12.0'
+  spec.add_development_dependency 'rspec', '~> 3.0'
+  spec.add_development_dependency 'rubocop', '~> 1.0'
+  spec.add_development_dependency 'rubocop-rake', '~> 0.6.0'
+  spec.add_development_dependency 'rubocop-rspec', '~> 2.15'
 end

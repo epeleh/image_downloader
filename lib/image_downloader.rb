@@ -17,4 +17,11 @@ module ImageDownloader
   def self.truncate_url(url)
     url.length > 120 ? "#{url[0...(120 - 3)]}..." : url
   end
+
+  def self.valid_url?(url)
+    uri = URI.parse(url)
+    uri.is_a?(URI::HTTP) && !uri.host.nil?
+  rescue URI::InvalidURIError
+    false
+  end
 end

@@ -11,12 +11,11 @@ module ImageDownloader
     end
 
     def call
-      ImageDownloader.logger.info "Process downloadings in #{threads_num} threads:"
+      ImageDownloader.logger.info "Processing downloads in #{threads_num} threads:"
       downloaded_count = download_images!
 
-      ImageDownloader.logger.info(
-        "#{downloaded_count} images downloaded, #{urls.count - downloaded_count} errors"
-      )
+      msg = "#{downloaded_count} images downloaded, #{urls.count - downloaded_count} errors"
+      ImageDownloader.logger.info msg
     end
 
     private
@@ -24,15 +23,32 @@ module ImageDownloader
     def download_images!
       pool = Concurrent::FixedThreadPool.new(threads_num)
 
-      urls.map.with_index(1) do |url, i|
+      promises = urls.map.with_index(1) do |url, i|
         Concurrent::Promise.execute(executor: pool) { process_url(url, i) }
-      end.map(&:value!).count(&:itself)
+      end
+
+      promises.map(&:value!).count(&:itself)
     ensure
       pool.tap(&:shutdown).wait_for_termination
     end
 
-    def process_url(url, num)
-      ImageDownloader.logger.info "[#{num}] Start downloading from: '#{ImageDownloader.truncate_url(url)}'"
+    def process_url(url, thread_n)
+      msg = "[#{thread_n}] Start downloading from: '#{ImageDownloader.truncate_url(url)}'"
+      ImageDownloader.logger.info msg
+
+      image_data, file_ext = fetch_image(url)
+
+      file_name = File.join(dirname, "#{thread_n}.#{file_ext}")
+      File.binwrite(file_name, image_data)
+
+      ImageDownloader.logger.info "[#{thread_n}] Image saved as '#{file_name}'"
+      true
+    rescue StandardError => e
+      ImageDownloader.logger.error "[#{thread_n}] #{e.message}"
+      false
+    end
+
+    def fetch_image(url)
       response = HTTParty.get(url, timeout: 10)
 
       raise "Bad status: #{response.code}" unless response.ok?
@@ -40,14 +56,7 @@ module ImageDownloader
       type, ext = response.content_type.split('/')
       raise "Bad content type: '#{type}'" if type != 'image'
 
-      name = File.join(dirname, "#{num}.#{ext}")
-      File.binwrite(name, response.body)
-
-      ImageDownloader.logger.info "[#{num}] Image saved as '#{name}'"
-      true
-    rescue StandardError => e
-      ImageDownloader.logger.error "[#{num}] " + e.message
-      false
+      [response.body, ext]
     end
   end
 end

@@ -2,6 +2,8 @@ PATH
   remote: .
   specs:
     image_downloader (1.0)
+      concurrent-ruby (~> 1.1)
+      httparty (~> 0.20.0)
 
 GEM
   remote: https://rubygems.org/
@@ -65,8 +67,6 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
-  concurrent-ruby (~> 1.1)
-  httparty (~> 0.20.0)
   image_downloader!
   pry (~> 0.13.1)
   rake (~> 12.0)
