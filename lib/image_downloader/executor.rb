@@ -2,8 +2,6 @@
 
 module ImageDownloader
   class Executor
-    attr_reader :file_path
-
     def initialize(file_path)
       @file_path = file_path
     end
@@ -20,6 +18,8 @@ module ImageDownloader
     end
 
     private
+
+    attr_reader :file_path
 
     def create_folder!
       ImageDownloader.logger.info "Creating a new folder: '#{dirname}'"

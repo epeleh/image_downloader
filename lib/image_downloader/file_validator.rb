@@ -4,8 +4,6 @@ module ImageDownloader
   class FileValidator
     MAX_FILE_SIZE = 1_000_000 # 1 MB
 
-    attr_reader :file_path
-
     def initialize(file_path)
       @file_path = file_path
     end
@@ -17,6 +15,8 @@ module ImageDownloader
     alias valid? call
 
     private
+
+    attr_reader :file_path
 
     def validate_file_path
       return true if file_path_error_message.nil?

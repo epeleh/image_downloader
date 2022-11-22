@@ -2,8 +2,6 @@
 
 module ImageDownloader
   class Fetcher
-    attr_reader :dirname, :urls, :threads_num
-
     def initialize(dirname, urls, threads_num = [urls.count, Concurrent.processor_count].min)
       @dirname = dirname
       @urls = urls
@@ -19,6 +17,8 @@ module ImageDownloader
     end
 
     private
+
+    attr_reader :dirname, :urls, :threads_num
 
     def download_images!
       pool = Concurrent::FixedThreadPool.new(threads_num)
