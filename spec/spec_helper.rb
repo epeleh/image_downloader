@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
+require 'tempfile'
+
 require 'bundler/setup'
 require 'image_downloader'
+
+ImageDownloader.logger.level = Logger::FATAL
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

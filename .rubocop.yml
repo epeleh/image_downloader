@@ -10,3 +10,21 @@ Layout/LineLength:
 
 Style/Documentation:
   Enabled: false
+
+RSpec/LetSetup:
+  Enabled: false
+
+RSpec/NamedSubject:
+  Enabled: false
+
+RSpec/MessageSpies:
+  Enabled: false
+
+RSpec/MultipleExpectations:
+  Enabled: false
+
+RSpec/ExampleLength:
+  Enabled: false
+
+RSpec/AnyInstance:
+  Enabled: false
