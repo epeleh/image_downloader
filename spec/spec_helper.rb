@@ -28,6 +28,8 @@ RSpec.configure do |config|
   end
 
   config.before do |example|
+    allow(Concurrent).to receive(:processor_count).and_return(1)
+
     next if config.files_to_run.one?
 
     path = example.metadata.dig(:example_group, :file_path)

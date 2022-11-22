@@ -12,15 +12,14 @@ RSpec.describe ImageDownloader::Executor do
     tempfile.close
   end
 
-  describe '#call' do
+  describe '#call', vcr: { cassette_name: 'some_urls' } do
     subject { described_class.new(file_path).call }
 
     let(:dirname) { Dir.mktmpdir.tap(&FileUtils.method(:rm_r)) }
 
     before do
+      stub_request(:get, 'https://www.google.com:81').to_timeout
       allow_any_instance_of(described_class).to receive(:dirname).and_return(dirname)
-      allow_any_instance_of(ImageDownloader::FileValidator).to receive(:valid?).and_return(true)
-      allow_any_instance_of(ImageDownloader::Fetcher).to receive(:call)
     end
 
     it 'creates a new folder' do
@@ -28,30 +27,37 @@ RSpec.describe ImageDownloader::Executor do
     end
 
     it 'fetches images' do
-      fetcher = instance_double(ImageDownloader::Fetcher)
-
-      allow(ImageDownloader::Fetcher).to receive(:new).with(
+      expect(ImageDownloader::Fetcher).to receive(:new).with(
         dirname, [
           'https://www.google.com:81', 'https://via.placeholder.com/300/09f/fff.png',
           'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png'
         ]
-      ).and_return(fetcher)
+      ).and_call_original
 
-      expect(fetcher).to receive(:call).with(no_args)
-
-      subject
+      expect { subject }.to change {
+        Dir.glob File.join(dirname, '*')
+      }.from([]).to(["#{dirname}/2.png", "#{dirname}/3.png"])
     end
 
     it 'writes correct logs' do
-      expect(ImageDownloader.logger).to receive(:info).with(
-        'Found 3 urls in the provided file'
-      ).ordered
+      expected_log = <<-LOG
+         INFO -- : Found 3 urls in the provided file
+         INFO -- : Creating a new folder: '#{dirname}'
+         INFO -- : Processing downloads in 1 threads:
+         INFO -- : [1] Start downloading from: 'https://www.google.com:81'
+        ERROR -- : [1] execution expired
+         INFO -- : [2] Start downloading from: 'https://via.placeholder.com/300/09f/fff.png'
+         INFO -- : [2] Image saved as '#{dirname}/2.png'
+         INFO -- : [3] Start downloading from: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png'
+         INFO -- : [3] Image saved as '#{dirname}/3.png'
+         INFO -- : 2 images downloaded, 1 errors
+         INFO -- : Done!
+      LOG
 
-      expect(ImageDownloader.logger).to receive(:info).with(
-        "Creating a new folder: '#{dirname}'"
-      ).ordered
-
-      expect(ImageDownloader.logger).to receive(:info).with('Done!').ordered
+      expected_log.each_line do |line|
+        type, msg = line.strip.split(' -- : ')
+        expect(ImageDownloader.logger).to receive(type.downcase).with(msg).ordered
+      end
 
       subject
     end
