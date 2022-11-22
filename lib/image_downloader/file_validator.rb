@@ -26,10 +26,10 @@ module ImageDownloader
     end
 
     def validate_urls
-      urls.map.with_index(1) do |url, i|
+      urls.map do |url|
         next true if ImageDownloader.valid_url?(url)
 
-        msg = "Provided file contains bad url (line: #{i}): '#{ImageDownloader.truncate_url(url)}'"
+        msg = "Provided file contains bad url: '#{ImageDownloader.truncate_url(url)}'"
         ImageDownloader.logger.error msg
 
         false
@@ -50,7 +50,7 @@ module ImageDownloader
     end
 
     def urls
-      @urls ||= File.readlines(file_path).map(&:strip).reject(&:empty?)
+      @urls ||= File.read(file_path).split
     end
   end
 end

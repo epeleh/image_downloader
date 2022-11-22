@@ -35,7 +35,7 @@ module ImageDownloader
     end
 
     def urls
-      @urls ||= File.readlines(file_path).map(&:strip).reject(&:empty?)
+      @urls ||= File.read(file_path).split
     end
   end
 end
